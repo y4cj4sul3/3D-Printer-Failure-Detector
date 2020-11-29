@@ -1,0 +1,15 @@
+# Cache files
+**/.ipynb_checkpoints
+**/__pycache__
+
+# VS Code
+.vscode
+
+# Config files
+**/*.ini
+
+# Large files
+**/*.png
+**/*.pkl
+**/*.pickle
+**/*.gcode
