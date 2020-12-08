@@ -56,8 +56,13 @@ while True:
 
     # get gcode
     gcode = printer.getPrintJobGcode()
+    if gcode is None:
+        continue
     with open(folderPath + 'path.gcode', 'w') as fp:
         fp.write(gcode)
+
+    # progess file
+    progress_fp = open(folderPath + 'progress.txt', 'w')
 
     progress = []
     timestamp = []
@@ -70,13 +75,20 @@ while True:
         # get snaphot
         img = printer.getCameraSnapshot()
         if img is not None and progress[-1] is not None:
+            progress_fp.write('{}, {}\n'.format(timestamp[-1], progress[-1]))
             with open(folderPath + 'images/' + str(timestamp[-1]) + '.png', 'wb') as fp:
                 shutil.copyfileobj(img, fp)
                 
-        if progress[-1] == 1:
+        printJobState = printer.getPrintJobState()
+        if progress[-1] == 1 or printJobState != 'printing':
+            print(printJobState)
+            print('loop break')
             break
 
+        time.sleep(1)
+
     # progress data
+    progress_fp.close()
     progress_data = {
         'timestamp': timestamp,
         'progress': progress

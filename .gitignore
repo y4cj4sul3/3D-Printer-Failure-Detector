@@ -9,7 +9,9 @@
 **/*.ini
 
 # Large files
+data/
 **/*.png
 **/*.pkl
 **/*.pickle
 **/*.gcode
+**/*.txt

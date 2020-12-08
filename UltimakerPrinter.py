@@ -1,5 +1,6 @@
 import requests
 from requests.auth import HTTPDigestAuth
+from urllib3.exceptions import ReadTimeoutError
 import configparser
 
 class Printer:
@@ -90,7 +91,7 @@ class Printer:
             return r.json()
 
     def getPrintJobGcode(self):
-        r = self.getRequest('print_job/gcode')
+        r = self.getRequest('print_job/gcode', timeout=60)
         if r.status_code != 200:
             print(r.json())
             return None
@@ -108,7 +109,7 @@ class Printer:
     # Camera
     def getCameraSnapshot(self, index=0):
         # old fashion: suitable for all printer
-        r = self.session.get('http://{}:{}/?action=snapshot'.format(self.printerIP, 8080+index), stream=True)
+        r = self.getRequest(url='http://{}:{}/?action=snapshot'.format(self.printerIP, 8080+index), stream=True, timeout=10)
         # API: not suitable for 3, 3E
         # r = self.getRequest('camera/{}/snapshot'.format(index), stream=True)
         if r.status_code != 200:
@@ -116,18 +117,29 @@ class Printer:
             return None
         else:
             return r.raw
-
-    def getCameraSnapshotOld(self, index=0):
-        r = self.session.get('http://{}:{}/?action=snapshot'.format(self.printerIP, 8080+index), stream=True)
-        if r.status_code != 200:
-            print(r.text)
-            return None
-        else:
-            return r.raw
         
     # HTTP Requests
-    def getRequest(self, method, **kargs):
-        r = self.session.get(self.printerURL + method, **kargs)
+    def getRequest(self, method=None, url=None, timeout=10, **kargs):
+        if method is not None:
+            url = self.printerURL + method
+
+        try:
+            r = self.session.get(url, timeout=timeout, **kargs)
+            
+        except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
+            # handle timeout
+            print('Request Timeout: ' + url)
+            r = requests.models.Response()
+            r.status_code = 408
+            r._content = b'{"message": "request timeout"}'
+
+        except ReadTimeoutError:
+            # handle timeout
+            print('Request Timeout (urllib): ' + url)
+            r = requests.models.Response()
+            r.status_code = 408
+            r._content = b'{"message": "request timeout"}'
+            
         return r
 
     def putRequest(self, method, **kargs):
@@ -146,7 +158,7 @@ if __name__ == '__main__':
     printer.setPrinterLED([0, 0, 100])
     print(printer.getPrintJobProgress())
 
-    img = printer.getCameraSnapshotOld()
+    img = printer.getCameraSnapshot()
     if img is None:
         print('oh no')
     
