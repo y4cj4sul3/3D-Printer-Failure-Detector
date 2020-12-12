@@ -64,23 +64,29 @@ while True:
     # progess file
     progress_fp = open(folderPath + 'progress.txt', 'w')
 
-    progress = []
-    timestamp = []
+    #progress = []
+    #timestamp = []
     # snapshot during printing
     while True:
-        # current progress and time
-        progress.append(printer.getPrintJobProgress())
-        timestamp.append(datetime.now().timestamp())
-        print(timestamp[-1], progress[-1])
+        print(datetime.now().timestamp())
         # get snaphot
         img = printer.getCameraSnapshot()
-        if img is not None and progress[-1] is not None:
-            progress_fp.write('{}, {}\n'.format(timestamp[-1], progress[-1]))
-            with open(folderPath + 'images/' + str(timestamp[-1]) + '.png', 'wb') as fp:
+        print(datetime.now().timestamp())
+        # current progress and time
+        progress = printer.getPrintJobProgress()
+        head_position = printer.getPrinterHeadPosition()
+        timestamp = datetime.now().timestamp()
+        print(timestamp, progress, head_position)
+
+        if img is not None and progress is not None:
+            # save to file
+            progress_fp.write('{}, {}, {}\n'.format(timestamp, progress, head_position))
+            with open(folderPath + 'images/' + str(timestamp) + '.png', 'wb') as fp:
                 shutil.copyfileobj(img, fp)
                 
+        # check progress and print job state
         printJobState = printer.getPrintJobState()
-        if progress[-1] == 1 or printJobState != 'printing':
+        if progress == 1 or (printJobState != 'printing' and printJobState is not None):
             print(printJobState)
             print('loop break')
             break
@@ -89,12 +95,12 @@ while True:
 
     # progress data
     progress_fp.close()
-    progress_data = {
-        'timestamp': timestamp,
-        'progress': progress
-    }
-    with open(folderPath + 'progress.pkl', 'wb') as fp:
-        pickle.dump(progress_data, fp)
+    # progress_data = {
+    #     'timestamp': timestamp,
+    #     'progress': progress
+    # }
+    # with open(folderPath + 'progress.pkl', 'wb') as fp:
+    #     pickle.dump(progress_data, fp)
 
     # print job
     printJob = printer.getPrintJob()

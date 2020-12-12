@@ -1,7 +1,9 @@
 import requests
 from requests.auth import HTTPDigestAuth
-from urllib3.exceptions import ReadTimeoutError
 import configparser
+
+import socket
+from urllib3.exceptions import ReadTimeoutError
 
 class Printer:
     def __init__(self, printer_name):
@@ -64,6 +66,15 @@ class Printer:
         r = self.putRequest('printer/led', json=payload)
         if r.status_code != 204:
             print(r.text)
+
+    def getPrinterHeadPosition(self, head_id=0):
+        r = self.getRequest('printer/heads/{}/position'.format(head_id))
+        if r.status_code != 200:
+            print(r.json())
+            return None
+        else:
+            msg = r.json()
+            return [msg['x'], msg['y'], msg['z']]
 
     # PrintJob
     def getPrintJob(self):
@@ -133,7 +144,7 @@ class Printer:
             r.status_code = 408
             r._content = b'{"message": "request timeout"}'
 
-        except ReadTimeoutError:
+        except (socket.timeout, ReadTimeoutError):
             # handle timeout
             print('Request Timeout (urllib): ' + url)
             r = requests.models.Response()

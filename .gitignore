@@ -18,3 +18,4 @@ data/
 **/*.pickle
 **/*.gcode
 **/*.txt
+**/*.zip
