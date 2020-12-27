@@ -5,6 +5,7 @@ import configparser
 import socket
 from urllib3.exceptions import ReadTimeoutError
 
+
 class Printer:
     def __init__(self, printer_name):
         config = configparser.ConfigParser()
@@ -13,11 +14,11 @@ class Printer:
         # printer
         self.printerName = 'ultimaker.' + printer_name
         self.printerIP = config[self.printerName]['printer_ip']
-        self.printerURL = 'http://'+ self.printerIP + '/api/v1/'
-        # user 
+        self.printerURL = 'http://' + self.printerIP + '/api/v1/'
+        # user
         self.userID = config[self.printerName]['id']
         self.userKey = config[self.printerName]['key']
-        
+
         # HTTP session
         self.session = requests.Session()
         self.session.auth = HTTPDigestAuth(self.userID, self.userKey)
@@ -47,7 +48,7 @@ class Printer:
             return None
         else:
             return r.json()
-    
+
     def getPrinterLED(self):
         r = self.getRequest('printer/led')
         if r.status_code != 200:
@@ -56,7 +57,7 @@ class Printer:
         else:
             msg = r.json()
             return [msg['hue'], msg['saturation'], msg['brightness']]
-    
+
     def setPrinterLED(self, HSV):
         payload = {
             "hue": HSV[0],
@@ -82,7 +83,7 @@ class Printer:
             "y": pos[1],
             "z": pos[2],
             "speed": speed
-            }
+        }
         r = self.putRequest('printer/heads/{}/position'.format(head_id), json=payload)
         if r.status_code != 204:
             print(r.text)
@@ -139,7 +140,7 @@ class Printer:
             return None
         else:
             return r.raw
-        
+
     # HTTP Requests
     def getRequest(self, method=None, url=None, timeout=10, **kargs):
         if method is not None:
@@ -147,7 +148,7 @@ class Printer:
 
         try:
             r = self.session.get(url, timeout=timeout, **kargs)
-            
+
         except (requests.exceptions.ConnectTimeout, requests.exceptions.ConnectionError, requests.exceptions.ReadTimeout):
             # handle timeout
             print('Request Timeout: ' + url)
@@ -161,7 +162,7 @@ class Printer:
             r = requests.models.Response()
             r.status_code = 408
             r._content = b'{"message": "request timeout"}'
-            
+
         return r
 
     def putRequest(self, method, **kargs):
@@ -170,7 +171,7 @@ class Printer:
 
 
 if __name__ == '__main__':
-    
+
     import shutil
 
     printer = Printer('3Ex')
@@ -183,6 +184,6 @@ if __name__ == '__main__':
     img = printer.getCameraSnapshot()
     if img is None:
         print('oh no')
-    
+
     with open('data/image.png', 'wb') as fp:
         shutil.copyfileobj(img, fp)
