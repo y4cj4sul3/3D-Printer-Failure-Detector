@@ -20,6 +20,7 @@ bl_info = {
 classes = (
     ps.SetUpScene,
     ps.SliceSimulation,
+    ps.RenderPrinting,
     ui.GcodeImporter,
     ui.ThreeDPFDPanel,
     ui.AllInOne

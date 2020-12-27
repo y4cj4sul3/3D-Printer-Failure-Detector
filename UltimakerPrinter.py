@@ -76,6 +76,17 @@ class Printer:
             msg = r.json()
             return [msg['x'], msg['y'], msg['z']]
 
+    def setPrinterHeadPosition(self, pos, speed, head_id=0):
+        payload = {
+            "x": pos[0],
+            "y": pos[1],
+            "z": pos[2],
+            "speed": speed
+            }
+        r = self.putRequest('printer/heads/{}/position'.format(head_id), json=payload)
+        if r.status_code != 204:
+            print(r.text)
+
     # PrintJob
     def getPrintJob(self):
         r = self.getRequest('print_job')

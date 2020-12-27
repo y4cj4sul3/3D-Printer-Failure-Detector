@@ -33,7 +33,7 @@ def segments_to_meshdata(segments):  # edges only on extrusion
             edges.append([i-del_offset, (i-del_offset)+1])
 
             if segs[i].coords['Z'] != segs[i+1].coords['Z']:
-                print('t->e', segs[i].coords['Z'], segs[i+1].coords['Z'])
+                #print('t->e', segs[i].coords['Z'], segs[i+1].coords['Z'])
                 time_height.append([len(edges), segs[i+1].coords['Z']])
 
         # mitte, current and next are extrusion, only add next, current is already in vert list
@@ -43,7 +43,7 @@ def segments_to_meshdata(segments):  # edges only on extrusion
             edges.append([i-del_offset, (i-del_offset)+1])
 
             if segs[i].coords['Z'] != segs[i+1].coords['Z']:
-                print('e->e', segs[i].coords['Z'], segs[i+1].coords['Z'])
+                #print('e->e', segs[i].coords['Z'], segs[i+1].coords['Z'])
                 time_height.append([len(edges), segs[i+1].coords['Z']])
 
         # end of path, marked by a travel segment ahead
@@ -55,7 +55,7 @@ def segments_to_meshdata(segments):  # edges only on extrusion
         if segs[i].style == 'travel' and segs[i+1].style == 'travel':
             del_offset += 1
             if segs[i].coords['Z'] != segs[i+1].coords['Z']:
-                print('t->t', segs[i].coords['Z'], segs[i+1].coords['Z'])
+                #print('t->t', segs[i].coords['Z'], segs[i+1].coords['Z'])
                 #print(i, del_offset, len(edges))
                 time_height.append([len(edges), segs[i+1].coords['Z']])
 
@@ -445,7 +445,7 @@ class GcodeModel:
         obj_from_pydata("Gcode", verts, edges, close=False,
                         collection_name="Layers")
 
-        return time_height
+        return verts, edges, time_height
 
         # if split_layers:
         #     i = 0
