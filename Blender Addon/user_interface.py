@@ -155,7 +155,7 @@ def render_printing(context, frame_duration, filepath, verts, edges, layer_th=0.
     # progress = []
     position = []
     # load progress
-    with open(path.join(filepath, 'progress.txt'), 'r') as fp:
+    with open(path.join(filepath, 'new_progress.txt'), 'r') as fp:
         lines = fp.readlines()
         for line in lines:
             data = line.split(', ')
@@ -211,17 +211,17 @@ def render_printing(context, frame_duration, filepath, verts, edges, layer_th=0.
         print(nl_pos - cur_pos, nl_vtx - cur_vtx)
 
         matches = []
-        for pos in position[cur_pos:nl_pos]:
+        for i in range(cur_pos, nl_pos):
+            pos = position[i]
             # print(cur_pos, pos)
             # find closest vertex
-            closest_vtx = np.argmin(np.linalg.norm(verts[cur_vtx:nl_vtx] - pos, axis=1))
-            closest_vtx += cur_vtx
+            closest_vtx = np.argmin(np.linalg.norm(verts[cur_vtx:nl_vtx] - pos, axis=1)) + cur_vtx
             distance = np.linalg.norm(verts[closest_vtx] - pos)
             # print(closest_vtx, verts[closest_vtx], distance)
 
             # skip progress that distance excessed threshold (subdivide threshold)
             if distance < subdivide_th:
-                matches.append(closest_vtx)
+                matches.append([i, closest_vtx])
             # else:
             #     print('not match')
 
@@ -232,7 +232,7 @@ def render_printing(context, frame_duration, filepath, verts, edges, layer_th=0.
             # ascending check
             valid_matches = [matches[0]]    # assume first match is valid
             for i in range(1, len(matches)):
-                if matches[i] > matches[i-1]:
+                if matches[i][1] > matches[i-1][1]:
                     valid_matches.append(matches[i])
 
             print('Valid Matches: {}/{}'.format(len(valid_matches), len(matches)))

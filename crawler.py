@@ -1,6 +1,7 @@
 import os
 import pickle
 import shutil
+import numpy as np
 
 import time
 from datetime import datetime
@@ -64,8 +65,6 @@ while True:
     # progess file
     progress_fp = open(folderPath + 'progress.txt', 'w')
 
-    #progress = []
-    #timestamp = []
     # snapshot during printing
     while True:
         print(datetime.now().timestamp())
@@ -78,12 +77,12 @@ while True:
         timestamp = datetime.now().timestamp()
         print(timestamp, progress, head_position)
 
-        if img is not None and progress is not None:
+        if img is not None and progress is not None and head_position is not None and not np.isnan(head_position).any():
             # save to file
             progress_fp.write('{}, {}, {}\n'.format(timestamp, progress, head_position))
             with open(folderPath + 'images/' + str(timestamp) + '.png', 'wb') as fp:
                 shutil.copyfileobj(img, fp)
-                
+
         # check progress and print job state
         printJobState = printer.getPrintJobState()
         if progress == 1 or (printJobState != 'printing' and printJobState is not None):
@@ -95,12 +94,6 @@ while True:
 
     # progress data
     progress_fp.close()
-    # progress_data = {
-    #     'timestamp': timestamp,
-    #     'progress': progress
-    # }
-    # with open(folderPath + 'progress.pkl', 'wb') as fp:
-    #     pickle.dump(progress_data, fp)
 
     # print job
     printJob = printer.getPrintJob()
@@ -112,4 +105,3 @@ while True:
         time.sleep(10)
 
     print('print finished !')
-
