@@ -1,6 +1,8 @@
-import os
+from os import makedirs, path
 import pickle
-import shutil
+import pathlib
+
+import cv2
 import numpy as np
 
 import time
@@ -9,6 +11,9 @@ from datetime import datetime
 import argparse
 
 from UltimakerPrinter import Printer
+from image_processor import ImageProcessor
+from path_manager import PathManager
+from simulator import Simulator
 
 # parse argument
 parser = argparse.ArgumentParser()
@@ -16,8 +21,11 @@ parser.add_argument('--printer', '-p', type=str, required=True, help='Printer na
 args = parser.parse_args()
 
 # printer (specified in ultimaker.ini)
-printerName = args.printer
-printer = Printer(printerName)
+printer_name = args.printer
+printer = Printer(printer_name)
+
+# path manager
+pm = PathManager(printer_name=printer_name, abs_path=pathlib.Path(__file__).parent.absolute())
 
 while True:
     # check printer state every minute
@@ -49,27 +57,47 @@ while True:
     # get print job info
     printJob = printer.getPrintJob()
     date = datetime.now().strftime('%Y%m%d%H%M%S')
-    folderPath = 'data/UM{}/{}_{}/'.format(printerName, printJob['name'], date)
-    os.makedirs(folderPath + 'images/')
-    print(folderPath)
-    with open(folderPath + 'printJob_start.pkl', 'wb') as fp:
+    # folderPath = 'data/UM{}/{}_{}/'.format(printer_name, printJob['name'], date)
+    pm.setPrintJob('{}_{}'.format(printJob['name'], date))
+    # create print job folders
+    makedirs(pm.raw_images)
+
+    print(pm.printjob_folder)
+
+    # save printjob information
+    with open(pm.printjob_start, 'wb') as fp:
         pickle.dump(printJob, fp)
 
     # get gcode
     gcode = printer.getPrintJobGcode()
     if gcode is None:
         continue
-    with open(folderPath + 'path.gcode', 'w') as fp:
+    with open(pm.gcode, 'w') as fp:
         fp.write(gcode)
 
+    # parse gcode
+    sim = Simulator(pm)
+    sim.parseGcode()
+
+    # simulate for every layer (async)
+    sim.simulate(gen_testing_data=True)
+
+    layer_height = 0
+
+    # image processor
+    ip = ImageProcessor()
+    if path.exists(pm.intrinsic):
+        ip.setCalibrationData(pm.intrinsic)
+        makedirs(pm.images)
+
     # progess file
-    progress_fp = open(folderPath + 'progress.txt', 'w')
+    progress_fp = open(pm.raw_progress, 'w')
 
     # snapshot during printing
     while True:
         print(datetime.now().timestamp())
         # get snaphot
-        img = printer.getCameraSnapshot()
+        raw_img = printer.getCameraSnapshot()
         print(datetime.now().timestamp())
         # current progress and time
         progress = printer.getPrintJobProgress()
@@ -77,11 +105,43 @@ while True:
         timestamp = datetime.now().timestamp()
         print(timestamp, progress, head_position)
 
-        if img is not None and progress is not None and head_position is not None and not np.isnan(head_position).any():
-            # save to file
-            progress_fp.write('{}, {}, {}\n'.format(timestamp, progress, head_position))
-            with open(folderPath + 'images/' + str(timestamp) + '.png', 'wb') as fp:
-                shutil.copyfileobj(img, fp)
+        # TODO: start when head_position starts from min z?
+        # but for imcomplete printjob? 
+
+        if raw_img is not None and progress is not None and head_position is not None and not np.isnan(head_position).any():
+            # preprocessing (include save raw image)
+            filename = '{}.png'.format(str(timestamp))
+            input_img = ip.preprocess(raw_img, path.join(pm.raw_images, filename))
+
+            if input_img is not None:
+                # collect training data
+                cv2.imwrite(path.join(pm.images, filename), input_img)
+                progress_fp.write('{}, {}, {}\n'.format(timestamp, progress, head_position))
+
+                # detect failure every layer
+                if layer_height < head_position[2]:
+                    layer_height = round(head_position[2]*100)/100
+                    print('Predict at layer height:', layer_height)
+
+                    ''' Failure Detection '''
+                    # check if the simulation exists
+                    sim_path = path.join(pm.testing, '{}.png'.format(layer_height))
+                    if path.exists(sim_path):
+                        print('EVALUATE!!')
+                        # TODO: load simulated image (for testing)
+                        # simulated_img = cv2.imread(sim_path)
+
+                        # TODO: predict
+                        # predict_img = model.predict(input_img)
+                        
+                        # TODO: evaluate
+                        # score = evaluate(predict_img, simulated_img)
+
+                        # TODO: alert if fall
+                        # if score < threshold:
+                        #     print('[Printing Error] probrary fail')
+            else:
+                print('Invalid input image')
 
         # check progress and print job state
         printJobState = printer.getPrintJobState()
@@ -97,7 +157,7 @@ while True:
 
     # print job
     printJob = printer.getPrintJob()
-    with open(folderPath + 'printJob_finish.pkl', 'wb') as fp:
+    with open(pm.printjob_finish, 'wb') as fp:
         pickle.dump(printJob, fp)
 
     # wait for state change

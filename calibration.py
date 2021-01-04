@@ -2,9 +2,10 @@ import numpy as np
 import cv2
 import glob
 from os import path
+from utils import PathManager
 
-printerName = 'UMS5'
-data_path = path.join('data', printerName, 'calibration')
+printer_name = 'S5'
+pm = PathManager(printer_name=printer_name)
 
 g = (7, 7)
 gsize = 0.023  # mm
@@ -17,7 +18,7 @@ objp[:, :2] = np.mgrid[0:g[0], 0:g[1]].T.reshape(-1, 2)
 # Arrays to store object points and image points from all the images.
 objpoints = []  # 3d point in real world space
 imgpoints = []  # 2d points in image plane.
-images = glob.glob(path.join(data_path, 'image_*.png'))
+images = glob.glob(path.join(pm.cal_images, '*.png'))
 print(len(images))
 for fname in images:
     img = cv2.imread(fname)
@@ -48,7 +49,7 @@ print(dist)
 # print("tvecs : \n")
 # print(tvecs)
 
-with open(path.join(data_path, 'intrinsic.npy'), 'wb') as fp:
+with open(pm.intrinsic, 'wb') as fp:
     np.save(fp, [mtx, dist])
 
 mean_error = 0
@@ -62,7 +63,7 @@ print("total error: {}".format(mean_error/len(objpoints)))
 ###########
 
 
-img = cv2.imread(path.join(data_path, 'image_ref.png'))
+img = cv2.imread(pm.ref_images)
 h, w = img.shape[:2]
 print(h, w)
 
@@ -145,7 +146,7 @@ if ret is True:
     P_blender = P_p @ R_o2b
     print(P_blender)
 
-    with open(path.join(data_path, 'camera_pose.npy'), 'wb') as fp:
+    with open(pm.camera_pos, 'wb') as fp:
         np.save(fp, P_blender)
     print('---')
 
