@@ -73,25 +73,22 @@ class Simulator:
 if __name__ == "__main__":
 
     ''' Offline Simulation '''
+    from os import path
 
-    # pm = PathManager(abs_path=pathlib.Path(__file__).parent.absolute())
+    pm = PathManager(abs_path=pathlib.Path(__file__).parent.absolute())
 
-    # # generate training data
-    # for printer_name in pm.getPrinterNames():
-    #     pm.setPrinter(printer_name)
-    #     if path.exists(pm.calibration_folder):
-    #         for printjob_name in pm.getPrintJobNames():
-    #             pm.setPrintJob(printjob_name)
-    #             if path.exists(pm.images):
-    #                 print(pm.printjob_folder)
+    # generate training data
+    for printer_name in pm.getPrinterNames():
+        pm.setPrinter(printer_name)
+        if path.exists(pm.calibration_folder):
+            for printjob_name in pm.getPrintJobNames():
+                pm.setPrintJob(printjob_name)
+                if path.exists(pm.images):
+                    print(pm.printjob_folder)
 
-    #                 sim = Simulator(pm)
+                    sim = Simulator(pm)
 
-    #                 sim.parseGcode()
+                    sim.parseGcode()
 
-    #                 # sim.simulate()
+                    sim.simulate(gen_training_data=True)
 
-    pm = PathManager(abs_path=pathlib.Path(__file__).parent.absolute(), printer_name='S5', printjob_name='UMS5_face_mount_20201223141607')
-    sim = Simulator(pm)
-    sim.simulate(background=False)
-    print('Hello')
