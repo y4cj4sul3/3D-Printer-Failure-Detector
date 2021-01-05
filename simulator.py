@@ -6,6 +6,7 @@ import time
 import numpy as np
 from threading import Thread
 
+
 class Simulator:
     def __init__(self, pm: PathManager):
         self.pm = pm
@@ -31,7 +32,7 @@ class Simulator:
         # print('then', then)
         print("importing Gcode took", now-then)
 
-    def simulate(self, background=True, gen_traning_data=False, gen_testing_data=False, asynchronous=True):
+    def simulate(self, background=True, gen_training_data=False, gen_testing_data=False, asynchronous=True):
 
         if self.pm.abs_path is not None:
             # run blender
@@ -45,7 +46,7 @@ class Simulator:
             if background:
                 cmd.insert(1, '--background')
             # generate training data
-            if gen_traning_data:
+            if gen_training_data:
                 cmd.append('--gen-training-data')
             # generate testing data
             if gen_testing_data:
@@ -92,5 +93,5 @@ if __name__ == "__main__":
 
     pm = PathManager(abs_path=pathlib.Path(__file__).parent.absolute(), printer_name='S5', printjob_name='UMS5_face_mount_20201223141607')
     sim = Simulator(pm)
-    sim.simulate()
+    sim.simulate(background=False)
     print('Hello')
