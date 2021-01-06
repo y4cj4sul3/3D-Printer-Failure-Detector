@@ -32,7 +32,7 @@ for printer_name in pm.getPrinterNames():
             pm.setPrintJob(printjob_name)
             if path.exists(pm.printjob_finish) and not path.exists(pm.images):
                 # completely recorded printjobs
-                print(pm.printer_folder)
+                print(pm.printjob_folder)
 
                 # create temp folder
                 temp_folder = path.join(pm.printjob_folder, 'temp')

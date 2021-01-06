@@ -120,3 +120,12 @@ class PathManager:
         printjob_folders = glob(path.join(self.printer_folder, '*'))
         printjob_names = [path.basename(x) for x in printjob_folders]
         return printjob_names
+
+if __name__ == '__main__':
+    pm = PathManager()
+    
+    for printer_name in pm.getPrinterNames():
+        print(printer_name)
+        pm.setPrinter(printer_name)
+        for printer_folder in pm.getPrintJobNames():
+            print(printer_folder)

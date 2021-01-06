@@ -98,9 +98,9 @@ def setupScene(filepath):
     bpy.data.objects['Camera'].data.shift_x = 0.017
     bpy.data.objects['Camera'].data.shift_y = 0.04
 
-    # rendering settings
-    bpy.context.scene.render.resolution_x = 800
-    bpy.context.scene.render.resolution_y = 600
+    # TODO: rendering settings depends on printers
+    bpy.context.scene.render.resolution_x = 495
+    bpy.context.scene.render.resolution_y = 376
     bpy.context.scene.render.film_transparent = True
 
 
@@ -114,7 +114,8 @@ def buildModel(name, verts, edges, time_height, collection_name='Collection'):
     me = bpy.data.meshes.new(name)
     # reverse edge order
     edges_rev = np.flip(edges, 0)
-    me.from_pydata(verts.tolist(), edges_rev.tolist(), [])
+    verts_resize = verts / 1000
+    me.from_pydata(verts_resize.tolist(), edges_rev.tolist(), [])
     # build object
     model = bpy.data.objects.new(name, me)
 
@@ -131,7 +132,7 @@ def buildModel(name, verts, edges, time_height, collection_name='Collection'):
             bpy.data.collections[collection_name].objects.link(model)
 
     # resize
-    model.scale /= 1000
+    # model.scale /= 1000
 
     # select model
     bpy.ops.object.select_all(action='DESELECT')
@@ -140,7 +141,7 @@ def buildModel(name, verts, edges, time_height, collection_name='Collection'):
 
     # turn object into volumn (the operation take selected objects and active object)
     bpy.ops.object.convert(target='CURVE')
-    model.data.bevel_depth = 0.175
+    model.data.bevel_depth = 0.000175
 
     # simulate slice
     frame_duration = len(edges)
@@ -148,10 +149,11 @@ def buildModel(name, verts, edges, time_height, collection_name='Collection'):
     model.modifiers["Build"].frame_duration = frame_duration
     bpy.context.scene.frame_end = frame_duration
 
+    base_height = bpy.data.objects['Camera'].location[2]
     # set animation
     for frame, height in time_height:
-        model.location[2] = - height / 1000
-        model.keyframe_insert(data_path="location", frame=frame, index=2)
+        bpy.data.objects['Camera'].location[2] = base_height + height / 1000
+        bpy.data.objects['Camera'].keyframe_insert(data_path="location", frame=frame, index=2)
 
 
 def genTrainingData(verts, edges, progress_path, output_folder, layer_th=0.03, subdivide_th=1):
