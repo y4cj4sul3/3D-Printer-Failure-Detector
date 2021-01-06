@@ -80,6 +80,9 @@ class PathManager:
             # progress: data/UM?/<printjob>/progress.txt
             self.progress = path.join(self.printjob_folder, 'progress.txt')
 
+            # testing data list: data/UM?/<printjob>/test_list.txt
+            self.test_list = path.join(self.printjob_folder, 'test_list.txt')
+
         else:
             self.printjob_name = None
             self.printjob_folder = None
@@ -101,6 +104,8 @@ class PathManager:
             self.raw_progress = None
             self.progress = None
 
+            self.test_list = None
+
     def abs(self, rel_path):
         if self.abs_path is None:
             print('Invalid absolute path. Please specify abs_path when initialize PathManager.')
@@ -121,11 +126,12 @@ class PathManager:
         printjob_names = [path.basename(x) for x in printjob_folders]
         return printjob_names
 
+
 if __name__ == '__main__':
     pm = PathManager()
-    
+
     for printer_name in pm.getPrinterNames():
         print(printer_name)
         pm.setPrinter(printer_name)
-        for printer_folder in pm.getPrintJobNames():
-            print(printer_folder)
+        for printjob_name in pm.getPrintJobNames():
+            print(printjob_name)
