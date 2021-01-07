@@ -13,9 +13,14 @@
 
 # Large files
 data/
+data
 **/*.png
 **/*.pkl
 **/*.pickle
 **/*.gcode
 **/*.txt
 **/*.zip
+
+# model checkpoints and tensorboard logs
+*.pth
+runs/
