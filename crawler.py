@@ -16,10 +16,13 @@ from UltimakerPrinter import Printer
 # parse argument
 parser = argparse.ArgumentParser()
 parser.add_argument('--printer', '-p', type=str, required=True, help='Printer name')
+parser.add_argument('--simulate', '-s', action='store_true', help='Simulate printing process')
 args = parser.parse_args()
+# arguments
+printer_name = args.printer
+do_simulate = args.simulate
 
 # printer (specified in ultimaker.ini)
-printer_name = args.printer
 printer = Printer(printer_name)
 
 # path manager
@@ -73,11 +76,13 @@ while True:
     with open(pm.gcode, 'w') as fp:
         fp.write(gcode)
 
-    # parse gcode
-    sim = Simulator(pm)
-    sim.parseGcode()
-    # simulate for every layer (async)
-    sim_thread = sim.simulate(gen_testing_data=True)
+    # simulation
+    if do_simulate:
+        # parse gcode
+        sim = Simulator(pm)
+        sim.parseGcode()
+        # simulate for every layer (async)
+        sim_thread = sim.simulate(gen_testing_data=True)
 
     # image processor
     ip = ImageProcessor()
@@ -116,7 +121,7 @@ while True:
                 cv2.imwrite(path.join(pm.images, filename), img)
                 progress_fp.write('{}, {}, {}\n'.format(timestamp, progress, position))
 
-                # FIXME: detect failure every layer
+                # detect failure every layer
                 queue_hc.append([np.round(position[2], decimals=2), timestamp])
                 if len(queue_hc) > 4:
                     queue_hc.pop(0)
