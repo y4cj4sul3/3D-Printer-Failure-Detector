@@ -4,7 +4,7 @@ from path_manager import PathManager
 from gcode_parser import GcodeParser
 import time
 import numpy as np
-from threading import Thread
+import threading
 
 
 class Simulator:
@@ -53,7 +53,7 @@ class Simulator:
                 cmd.append('--gen-testing-data')
 
             if asynchronous:
-                thread = Thread(target=self._exeCmd, args=(cmd,))
+                thread = threading.Thread(target=self._exeCmd, args=(cmd,))
                 thread.start()
                 return thread
             else:
@@ -75,6 +75,8 @@ if __name__ == "__main__":
     ''' Offline Simulation '''
     from os import path
 
+    max_thread_num = 5
+
     pm = PathManager(abs_path=pathlib.Path(__file__).parent.absolute())
 
     # generate training data
@@ -84,11 +86,18 @@ if __name__ == "__main__":
             for printjob_name in pm.getPrintJobNames():
                 pm.setPrintJob(printjob_name)
                 if path.exists(pm.images):
+                    # limit number of threads 
+                    while threading.active_count() >= max_thread_num:
+                        # check every 5 mins
+                        time.sleep(300)
+
+                    print('thread counts', threading.active_count())
+
                     print(pm.printjob_folder)
 
                     sim = Simulator(pm)
 
                     sim.parseGcode()
 
-                    sim.simulate(gen_training_data=True)
+                    sim.simulate(gen_testing_data=True)
 
