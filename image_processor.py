@@ -1,7 +1,8 @@
-import cv2
-import numpy as np
 import shutil
 from os import path
+
+import cv2
+import numpy as np
 
 
 class ImageProcessor:
@@ -13,6 +14,8 @@ class ImageProcessor:
         # set calibration data
         if type(cal_path) == str:
             self.setCalibrationData(cal_path)
+        else:
+            self.cal_available = False
 
     def preprocess(self, raw_img, raw_path='tmp.png', **kargs):
         '''
@@ -44,7 +47,11 @@ class ImageProcessor:
         img: RGB image, numpy array
         rows, cols: the area to be checked, anchored at bottom right, set 0 to check all
         '''
-        return not (img[-rows:, -cols:, :] == 128).all()
+        try:
+            return not (img[-rows:, -cols:, :] == 128).all()
+        except TypeError:
+            print('TypeError: ', type(img), np.shape(img))
+            return False
 
     def setCalibrationData(self, cal_path: str):
         if path.exists(cal_path):

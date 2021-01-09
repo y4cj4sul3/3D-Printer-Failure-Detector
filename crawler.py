@@ -1,27 +1,28 @@
-from os import makedirs, path
-import pickle
+import argparse
 import pathlib
+import pickle
+import time
+from datetime import datetime
+from os import makedirs, path
 
 import cv2
 import numpy as np
 
-import time
-from datetime import datetime
-
-import argparse
-
-from UltimakerPrinter import Printer
 from image_processor import ImageProcessor
 from path_manager import PathManager
 from simulator import Simulator
+from UltimakerPrinter import Printer
 
 # parse argument
 parser = argparse.ArgumentParser()
 parser.add_argument('--printer', '-p', type=str, required=True, help='Printer name')
+parser.add_argument('--simulate', '-s', action='store_true', help='Simulate printing process')
 args = parser.parse_args()
+# arguments
+printer_name = args.printer
+do_simulate = args.simulate
 
 # printer (specified in ultimaker.ini)
-printer_name = args.printer
 printer = Printer(printer_name)
 
 # path manager
@@ -75,14 +76,13 @@ while True:
     with open(pm.gcode, 'w') as fp:
         fp.write(gcode)
 
-    # parse gcode
-    sim = Simulator(pm)
-    sim.parseGcode()
-
-    # simulate for every layer (async)
-    sim.simulate(gen_testing_data=True)
-
-    layer_height = 0
+    # simulation
+    if do_simulate:
+        # parse gcode
+        sim = Simulator(pm)
+        sim.parseGcode()
+        # simulate for every layer (async)
+        sim_thread = sim.simulate(gen_testing_data=True)
 
     # image processor
     ip = ImageProcessor()
@@ -90,8 +90,13 @@ while True:
         ip.setCalibrationData(pm.intrinsic)
         makedirs(pm.images)
 
-    # progess file
+    # progess file & test list file
     progress_fp = open(pm.raw_progress, 'w')
+    test_list_fp = open(pm.test_list, 'w')
+
+    # layer_height = 0
+    # queues for detect height change
+    queue_hc = []
 
     # snapshot during printing
     while True:
@@ -101,39 +106,50 @@ while True:
         print(datetime.now().timestamp())
         # current progress and time
         progress = printer.getPrintJobProgress()
-        head_position = printer.getPrinterHeadPosition()
+        position = printer.getPrinterHeadPosition()
         timestamp = datetime.now().timestamp()
-        print(timestamp, progress, head_position)
+        print(timestamp, progress, position)
 
-        # TODO: start when head_position starts from min z?
-        # but for imcomplete printjob? 
-
-        if raw_img is not None and progress is not None and head_position is not None and not np.isnan(head_position).any():
+        if raw_img is not None and progress is not None and position is not None and not np.isnan(position).any():
             # preprocessing (include save raw image)
             filename = '{}.png'.format(str(timestamp))
-            input_img = ip.preprocess(raw_img, path.join(pm.raw_images, filename))
+            img = ip.preprocess(raw_img, path.join(pm.raw_images, filename))
 
-            if input_img is not None:
+            # check image validity
+            if img is not None:
                 # collect training data
-                cv2.imwrite(path.join(pm.images, filename), input_img)
-                progress_fp.write('{}, {}, {}\n'.format(timestamp, progress, head_position))
+                cv2.imwrite(path.join(pm.images, filename), img)
+                progress_fp.write('{}, {}, {}\n'.format(timestamp, progress, position))
 
                 # detect failure every layer
-                if layer_height < head_position[2]:
-                    layer_height = round(head_position[2]*100)/100
+                queue_hc.append([np.round(position[2], decimals=2), timestamp])
+                if len(queue_hc) > 4:
+                    queue_hc.pop(0)
+
+                queue_tmp = np.array(queue_hc)
+                if len(queue_tmp) >= 4 and queue_tmp[0, 0] < queue_tmp[1, 0] and (queue_tmp[1, 0] == queue_tmp[2:, 0]).all():
+                    layer_height, timestamp = queue_tmp[1]
+
                     print('Predict at layer height:', layer_height)
 
                     ''' Failure Detection '''
-                    # check if the simulation exists
+                    # check if the input and simulation images exist
+                    input_path = path.join(pm.images, '{}.png'.format(timestamp))
                     sim_path = path.join(pm.testing, '{}.png'.format(layer_height))
-                    if path.exists(sim_path):
+                    # record testing data
+                    test_list_fp.write('{}, {}\n'.format(layer_height, timestamp))
+
+                    if path.exists(input_path) and path.exists(sim_path):
                         print('EVALUATE!!')
+                        # TODO: load input image image (for testing)
+                        # input_img = cv2.imread(input_path)
+
                         # TODO: load simulated image (for testing)
                         # simulated_img = cv2.imread(sim_path)
 
                         # TODO: predict
                         # predict_img = model.predict(input_img)
-                        
+
                         # TODO: evaluate
                         # score = evaluate(predict_img, simulated_img)
 
@@ -152,8 +168,9 @@ while True:
 
         time.sleep(1)
 
-    # progress data
+    # progress data & test list file
     progress_fp.close()
+    test_list_fp.close()
 
     # print job
     printJob = printer.getPrintJob()
@@ -163,5 +180,7 @@ while True:
     # wait for state change
     while printer.getPrintJobState() == 'printing':
         time.sleep(10)
+
+    # TODO: terminate simulation thread
 
     print('print finished !')

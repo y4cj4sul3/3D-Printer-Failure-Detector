@@ -1,13 +1,14 @@
-import bpy
 import argparse
+import math
+from datetime import datetime
+from os import path
 from sys import argv
 from sys import path as syspath
-from os import path
 
-import math
+import bpy
 import numpy as np
 from mathutils import Matrix
-from datetime import datetime
+
 
 def allInOne():
     then = datetime.now()
@@ -31,7 +32,7 @@ def allInOne():
     if genTrain:
         print('Generate Training Data')
         genTrainingData(verts, edges, pm.abs(pm.progress), pm.abs(pm.training))
-    
+
     # generate testing data
     if genTest:
         print('Generate Testing data')
@@ -258,6 +259,7 @@ def genTestingData(verts, edges, output_folder):
     cur_vtx = 0
     cur_edge = 0
     num_vtx = len(verts)
+    num_edges = len(edges)
     num_data = 0
 
     while cur_vtx < num_vtx:
@@ -267,7 +269,7 @@ def genTestingData(verts, edges, output_folder):
         cur_vtx = findNextLayerIndex(verts, layer_height, cur_vtx)
 
         # find edge index, which is the frame index
-        while edges[cur_edge, 1] < cur_vtx:
+        while cur_edge < num_edges and edges[cur_edge, 1] < cur_vtx:
             cur_edge += 1
 
         # render
@@ -275,6 +277,7 @@ def genTestingData(verts, edges, output_folder):
         num_data += 1
 
     print('Total DATA:', num_data)
+
 
 def findNextLayerIndex(pos, cur_height, start_idx=0, layer_th=0.03):
     nl_idx = start_idx
