@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>3D Printer Failure Detector</title>
+  </head>
+  <body>
+    <h1>3D Printer Failure Detector</h1>
+
+    <!-- <label for="printer_ip">Printer IP</label>
+    <input type="text" id="printer_ip" />
+    <button onclick="connectPrinter()">Connect</button> -->
+
+    <!-- <img
+      alt
+      src="http://192.168.1.182/api/v1/camera/0/stream"
+      width="800"
+      height="600"
+    />
+    <img
+      src="../data/1609804837.922164.png"
+      width="800"
+      height="600"
+      id="sim_img"
+    /> -->
+
+    <template id="printer_visualizer_template">
+      <div class="printer_visualizer">
+        <h3 class="printer_name">Printer Name</h3>
+        <h4 class="printjob_name">Print Job Name</h4>
+        <p>
+          Printer State: <span class="printer_state"></span>, Print Job State:
+          <span class="printjob_state"></span>
+        </p>
+        <img class="input_img" />
+        <img class="sim_img" />
+        <img class="predict_img" />
+        <p>Result: <span class="result"></span></p>
+      </div>
+    </template>
+
+    <script src="printer_model.js" type="text/javascript"></script>
+
+    <script>
+      //   printer_ip_input = document.getElementById("printer_ip");
+      //   function connectPrinter() {
+      //     console.log(printer_ip_input.value);
+      //   }
+      //   sim_img_ele = document.getElementById("sim_img");
+      //   sim_img_ele.src =
+      //     "../data/UMS5/UMS5_37882268-233f-4f58-ae09-7bba1d8a9706_20201221143731/simulation/testing/0.2.png";
+      //   printer_ip = "192.168.1.182";
+
+      printer_info = {};
+
+      function updatePrinterInfo(new_info) {
+        // set expired
+        for (var key in printer_info) {
+          printer_info[key].isExpired = true;
+        }
+        // update printer info
+        for (var key in new_info) {
+          if (key in printer_info) {
+            printer_info[key].update(new_info[key]);
+          } else {
+            printer_info[key] = new PrinterModel(new_info[key]);
+          }
+        }
+        // check expiration
+        for (var key in printer_info) {
+          if (printer_info[key].isExpired) {
+            printer_info[key].expired();
+          }
+        }
+      }
+
+      var xhttp = new XMLHttpRequest();
+      xhttp.onload = function () {
+        if (xhttp.status == 200) {
+          var data = JSON.parse(xhttp.responseText);
+          console.log(data);
+          updatePrinterInfo(data);
+        }
+      };
+
+      function getPrinterInfo() {
+        xhttp.open("GET", "/get_printer_info", true);
+        xhttp.send();
+      }
+
+      //  listen for update
+      getPrinterInfo();
+      setInterval(getPrinterInfo, 10000);
+    </script>
+  </body>
+</html>

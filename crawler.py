@@ -13,12 +13,14 @@ from path_manager import PathManager
 from simulator import Simulator
 from UltimakerPrinter import Printer
 from segmentation import Evaluator
+from visualization_client import DetectorVisualizerClient
 
 # parse argument
 parser = argparse.ArgumentParser()
 parser.add_argument('--printer', '-p', type=str, required=True, help='Printer name')
 parser.add_argument('--simulate', '-s', action='store_true', help='Simulate printing process')
 parser.add_argument('--evaluate', '-e', action='store_true', help='Simulate printing process')
+parser.add_argument('--visualizer', '-v', action='store_true', help='Visualize result')
 args = parser.parse_args()
 # arguments
 printer_name = args.printer
@@ -26,6 +28,7 @@ do_simulate = args.simulate
 do_evaluate = args.evaluate
 if do_evaluate:
     do_simulate = True
+do_visualize = args.visualizer
 
 # printer (specified in ultimaker.ini)
 printer = Printer(printer_name)
@@ -39,6 +42,10 @@ if do_evaluate:
     # create folder
     # load evaluation model
     evaluator = Evaluator('segmentation/model/PAN-se_resnet50-aug-best_model-traced.pth')
+# visualizer
+vc = None
+if do_visualize:
+    vc = DetectorVisualizerClient(pm.printer_name)
 
 while True:
     # check printer state every minute
@@ -54,6 +61,8 @@ while True:
             if printJobState != printer.getPrintJobState():
                 printJobState = printer.getPrintJobState()
                 print(printerStatus, printJobState)
+                if do_visualize:
+                    vc.sendPrinterInfo(printer_state=printerStatus, printjob_state=printJobState)
                 if printJobState == 'printing':
                     break
             waitTime = 1
@@ -61,6 +70,9 @@ while True:
             if printerStatus != printer.getPrinterState():
                 printerStatus = printer.getPrinterState()
                 print(printerStatus)
+                if do_visualize:
+                    vc.sendPrinterInfo(printer_state=printerStatus)
+
             waitTime = 60
 
         time.sleep(waitTime)
@@ -76,6 +88,9 @@ while True:
     makedirs(pm.raw_images)
 
     print(pm.printjob_folder)
+
+    if do_visualize:
+        vc.sendPrinterInfo(printjob_name=pm.printjob_name)
 
     # save printjob information
     with open(pm.printjob_start, 'wb') as fp:
@@ -170,6 +185,9 @@ while True:
 
                             eval_result_fp.write(f'{layer_height}, {loss}, {iou}\n')
                             print(f" === Loss: {loss}, IOU: {iou} === ")
+
+                            if do_visualize:
+                                vc.sendPrinterInfo(input_img_path=input_path, sim_img_path=sim_path)
             else:
                 print('Invalid input image')
 
@@ -178,10 +196,13 @@ while True:
         if progress == 1 or (printJobState != 'printing' and printJobState is not None):
             print(printJobState)
             print('loop break')
+            if do_visualize:
+                vc.sendPrinterInfo(printjob_state=printJobState)
             break
 
         time.sleep(1)
 
+    # FIXME: is the state is pausing, than should wait for resume
     # progress data & test list file
     progress_fp.close()
     test_list_fp.close()
