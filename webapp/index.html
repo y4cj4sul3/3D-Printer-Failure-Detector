@@ -6,23 +6,6 @@
   <body>
     <h1>3D Printer Failure Detector</h1>
 
-    <!-- <label for="printer_ip">Printer IP</label>
-    <input type="text" id="printer_ip" />
-    <button onclick="connectPrinter()">Connect</button> -->
-
-    <!-- <img
-      alt
-      src="http://192.168.1.182/api/v1/camera/0/stream"
-      width="800"
-      height="600"
-    />
-    <img
-      src="../data/1609804837.922164.png"
-      width="800"
-      height="600"
-      id="sim_img"
-    /> -->
-
     <template id="printer_visualizer_template">
       <div class="printer_visualizer">
         <h3 class="printer_name">Printer Name</h3>
@@ -41,15 +24,6 @@
     <script src="printer_model.js" type="text/javascript"></script>
 
     <script>
-      //   printer_ip_input = document.getElementById("printer_ip");
-      //   function connectPrinter() {
-      //     console.log(printer_ip_input.value);
-      //   }
-      //   sim_img_ele = document.getElementById("sim_img");
-      //   sim_img_ele.src =
-      //     "../data/UMS5/UMS5_37882268-233f-4f58-ae09-7bba1d8a9706_20201221143731/simulation/testing/0.2.png";
-      //   printer_ip = "192.168.1.182";
-
       printer_info = {};
 
       function updatePrinterInfo(new_info) {
