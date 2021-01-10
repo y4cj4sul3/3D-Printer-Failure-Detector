@@ -2,22 +2,41 @@
 <html>
   <head>
     <title>3D Printer Failure Detector</title>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-giJF6kkoqNQ00vy+HMDP7azOuL0xtbfIcaT9wjKHr8RbDVddVHyTfAAsrekwKmP1" crossorigin="anonymous" />
   </head>
   <body>
-    <h1>3D Printer Failure Detector</h1>
+    <nav class="navbar navbar-light bg-light">
+      <div class="container-fluid">
+        <span class="navbar-brand mb-0 h1">3D Printer Failure Detector</span>
+      </div>
+    </nav>
+
+    <div id="printer_list" class="container"></div>
 
     <template id="printer_visualizer_template">
-      <div class="printer_visualizer">
-        <h3 class="printer_name">Printer Name</h3>
-        <h4 class="printjob_name">Print Job Name</h4>
-        <p>
-          Printer State: <span class="printer_state"></span>, Print Job State:
-          <span class="printjob_state"></span>
-        </p>
-        <img class="input_img" />
-        <img class="sim_img" />
-        <img class="predict_img" />
-        <p>Result: <span class="result"></span></p>
+      <div class="row g-2">
+        <div class="printer_visualizer card">
+          <div class="card-header">
+            <span class="printer_name">Printer Name</span>
+            <span class="printer_state badge bg-secondary"></span>
+            <span class="printjob_state badge bg-secondary"></span>
+          </div>
+
+          <div class="card-body">
+            <!-- <h3 class="printer_name card-title"></h3> -->
+
+            <h5 class="printjob_name">Print Job Name</h5>
+            <img class="input_img" />
+            <img class="sim_img" />
+            <img class="predict_img" />
+            <p>Result: <span class="result"></span></p>
+          </div>
+        </div>
       </div>
     </template>
 
@@ -51,7 +70,7 @@
       xhttp.onload = function () {
         if (xhttp.status == 200) {
           var data = JSON.parse(xhttp.responseText);
-          console.log(data);
+          // console.log(data);
           updatePrinterInfo(data);
         }
       };
@@ -61,7 +80,7 @@
         xhttp.send();
       }
 
-      //  listen for update
+      // listen for update
       getPrinterInfo();
       setInterval(getPrinterInfo, 10000);
     </script>
