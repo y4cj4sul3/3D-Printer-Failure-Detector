@@ -240,7 +240,9 @@ def genTrainingData(verts, edges, progress_path, output_folder, layer_th=0.03, s
                     cur_edge += 1
 
                 # render
-                render(cur_edge, path.join(output_folder, '{}.png'.format(timestamp[match[0]])))
+                filepath = path.join(output_folder, '{}.png'.format(timestamp[match[0]]))
+                if not path.exists(filepath):
+                    render(cur_edge, filepath)
 
         cur_vtx = nl_vtx
         cur_pos = nl_pos
@@ -273,7 +275,9 @@ def genTestingData(verts, edges, output_folder):
             cur_edge += 1
 
         # render
-        render(cur_edge, path.join(output_folder, '{}.png'.format(layer_height)))
+        filepath = path.join(output_folder, '{}.png'.format(layer_height))
+        if not path.exists(filepath):
+            render(cur_edge, filepath)
         num_data += 1
 
     print('Total DATA:', num_data)
