@@ -6,7 +6,7 @@ import segmentation_models_pytorch as smp
 import torch
 from torchvision import transforms
 
-from data import get_preprocessing
+from .data import get_preprocessing
 
 
 class Evaluator():
