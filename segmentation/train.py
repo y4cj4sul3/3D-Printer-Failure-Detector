@@ -28,6 +28,8 @@ def train(data_dir, checkpoints_dir, architecture, encoder, encoder_weights, act
         print('No Data!')
         sys.exit(-1)
 
+    os.makedirs(checkpoints_dir, exist_ok=True)
+
     experiment_name = f'{architecture}-{encoder}{"-aug" if augmentation else ""}'
     writer = SummaryWriter(os.path.join('runs', f'{datetime.now().strftime("%Y-%m-%d_%H:%M:%S")}-{experiment_name}'))
 
@@ -57,7 +59,7 @@ def train(data_dir, checkpoints_dir, architecture, encoder, encoder_weights, act
 
     # train model for 40 epochs
     max_score = 0
-    for step in range(0, 40):
+    for step in range(0, 30):
         print(f'\nEpoch {step + 1}:')
         train_logs = train_epoch.run(train_loader)
         valid_logs = valid_epoch.run(valid_loader)
@@ -67,6 +69,7 @@ def train(data_dir, checkpoints_dir, architecture, encoder, encoder_weights, act
         writer.add_scalar('Loss/valid', valid_logs['dice_loss'], step)
         writer.add_scalar('IoU/train', train_logs['iou_score'], step)
         writer.add_scalar('IoU/valid', valid_logs['iou_score'], step)
+        writer.flush()
 
         # do something (save model, change lr, etc.)
         if max_score < valid_logs['iou_score']:
@@ -74,9 +77,11 @@ def train(data_dir, checkpoints_dir, architecture, encoder, encoder_weights, act
             torch.save(model, os.path.join(checkpoints_dir, f'{experiment_name}-best_model.pth'))
             print('Model saved!')
 
-        if step == 25:
+        if step == 20:
             optimizer.param_groups[0]['lr'] = 1e-5
             print('Decrease decoder learning rate to 1e-5!')
+
+    writer.close()
 
 
 if __name__ == '__main__':
