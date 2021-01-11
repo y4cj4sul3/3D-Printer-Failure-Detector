@@ -31,10 +31,24 @@
             <!-- <h3 class="printer_name card-title"></h3> -->
 
             <h5 class="printjob_name">Print Job Name</h5>
-            <img class="input_img" />
-            <img class="sim_img" />
-            <img class="predict_img" />
-            <p>Result: <span class="result"></span></p>
+            <p><span class="result"></span></p>
+
+            <div class="container">
+              <div class="row row-cols-3">
+                <div class="col">
+                  <img class="input_img" width="100%" height="auto" />
+                </div>
+                <div class="col">
+                  <img class="sim_img" width="100%" height="auto" />
+                </div>
+                <div class="col">
+                  <img class="predict_img" width="100%" height="95%" />
+                </div>
+              </div>
+              <div class="col">
+                <img class="iou_img" width="100%" height="95%" />
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -82,7 +96,7 @@
 
       // listen for update
       getPrinterInfo();
-      setInterval(getPrinterInfo, 10000);
+      setInterval(getPrinterInfo, 5000);
     </script>
   </body>
 </html>

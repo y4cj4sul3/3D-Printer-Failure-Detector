@@ -22,11 +22,13 @@ class DetectorVisualizerClient:
             'input_img_path': None,
             'sim_img_path': None,
             'predict_img_path': None,
+            'iou_img_path': None,
             'result': None
         }
 
-    def sendPrinterInfo(self, printer_name=None, printer_state=None, printjob_name=None, printjob_state=None, input_img_path=None, sim_img_path=None, predict_img_path=None, result=None):
-        self.updatePrinterInfo(printer_name=printer_name, printer_state=printer_state, printjob_name=printjob_name, printjob_state=printjob_state, input_img_path=input_img_path, sim_img_path=sim_img_path, predict_img_path=predict_img_path, result=result)
+    def sendPrinterInfo(self, printer_name=None, printer_state=None, printjob_name=None, printjob_state=None, input_img_path=None, sim_img_path=None, predict_img_path=None, iou_img_path=None, result=None):
+        self.updatePrinterInfo(printer_name=printer_name, printer_state=printer_state, printjob_name=printjob_name, printjob_state=printjob_state,
+                               input_img_path=input_img_path, sim_img_path=sim_img_path, predict_img_path=predict_img_path, iou_img_path=iou_img_path, result=result)
 
         return self.postRequest(self.url + 'printer_info', json=self.printer_info)
 
@@ -70,7 +72,7 @@ class DetectorVisualizerClient:
 
 if __name__ == "__main__":
     client = DetectorVisualizerClient('S5')
-    r = client.sendPrinterInfo(printjob_state='test')
+    r = client.sendPrinterInfo(printer_state='idle')
     print(r.text)
     r = client.getPrinterInfo()
     print(r.json())

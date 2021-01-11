@@ -83,7 +83,11 @@ class PrinterModel {
     // result
     var result_com = this.div.querySelector(".result");
     if (this.printer_info["result"] != null) {
-      result_com.innerHTML = this.printer_info["result"];
+      var result = this.printer_info["result"].split(",");
+      var loss = parseFloat(result[0]);
+      var iou = parseFloat(result[1]);
+      // console.log("Loss:", loss, ", IOU:", iou);
+      result_com.innerHTML = "Loss: " + loss + ", IOU: " + iou;
       result_com.style.display = "";
     } else {
       result_com.style.display = "none";
@@ -110,6 +114,13 @@ class PrinterModel {
       predict_img.style.display = "";
     } else {
       predict_img.style.display = "none";
+    }
+    var iou_img = this.div.querySelector(".iou_img");
+    if (this.printer_info["iou_img_path"] != null) {
+      iou_img.src = this.printer_info["iou_img_path"];
+      iou_img.style.display = "";
+    } else {
+      iou_img.style.display = "none";
     }
   }
 
