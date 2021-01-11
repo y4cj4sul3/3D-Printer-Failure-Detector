@@ -26,21 +26,15 @@ class PrinterDataset(Dataset):
             if not os.path.isdir(j):
                 continue
             images_dir = os.path.join(j, 'images')
-            masks_dir = os.path.join(j, 'simulation', 'testing' if is_valid else 'training')
+            masks_dir = os.path.join(j, 'simulation', 'testing')
             if not os.path.exists(masks_dir):
                 continue
 
-            if is_valid:
-                with open(os.path.join(j, 'test_list.txt')) as csvfile:
-                    filelist = csv.reader(csvfile, delimiter=',')
-                    for m, i in filelist:
-                        self.images_fps.append(os.path.join(images_dir, f'{i.strip()}.png'))
-                        self.masks_fps.append(os.path.join(masks_dir, f'{m.strip()}.png'))
-            else:
-                filelist = os.listdir(masks_dir)
-                for f in filelist:
-                    self.images_fps.append(os.path.join(images_dir, f))
-                    self.masks_fps.append(os.path.join(masks_dir, f))
+            with open(os.path.join(j, 'test_list.txt')) as csvfile:
+                filelist = csv.reader(csvfile, delimiter=',')
+                for m, i in filelist:
+                    self.images_fps.append(os.path.join(images_dir, f'{i.strip()}.png'))
+                    self.masks_fps.append(os.path.join(masks_dir, f'{m.strip()}.png'))
 
         self.preprocessing = preprocessing
 
