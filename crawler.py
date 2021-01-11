@@ -12,21 +12,33 @@ from image_processor import ImageProcessor
 from path_manager import PathManager
 from simulator import Simulator
 from UltimakerPrinter import Printer
+from segmentation import Evaluator
 
 # parse argument
 parser = argparse.ArgumentParser()
 parser.add_argument('--printer', '-p', type=str, required=True, help='Printer name')
 parser.add_argument('--simulate', '-s', action='store_true', help='Simulate printing process')
+parser.add_argument('--evaluate', '-e', action='store_true', help='Simulate printing process')
 args = parser.parse_args()
 # arguments
 printer_name = args.printer
 do_simulate = args.simulate
+do_evaluate = args.evaluate
+if do_evaluate:
+    do_simulate = True
 
 # printer (specified in ultimaker.ini)
 printer = Printer(printer_name)
 
 # path manager
 pm = PathManager(printer_name=printer_name, abs_path=pathlib.Path(__file__).parent.absolute())
+
+# evaluator
+evaluator = None
+if do_evaluate:
+    # create folder
+    # load evaluation model
+    evaluator = Evaluator('segmentation/model/PAN-se_resnet50-aug-best_model-traced.pth')
 
 while True:
     # check printer state every minute
@@ -59,7 +71,7 @@ while True:
     printJob = printer.getPrintJob()
     date = datetime.now().strftime('%Y%m%d%H%M%S')
     # folderPath = 'data/UM{}/{}_{}/'.format(printer_name, printJob['name'], date)
-    pm.setPrintJob('{}_{}'.format(printJob['name'], date))
+    pm.setPrintJob(f'{printJob["name"]}_{date}')
     # create print job folders
     makedirs(pm.raw_images)
 
@@ -94,9 +106,15 @@ while True:
     progress_fp = open(pm.raw_progress, 'w')
     test_list_fp = open(pm.test_list, 'w')
 
+    # evaluation
     # layer_height = 0
     # queues for detect height change
     queue_hc = []
+    eval_result_fp = None
+    if do_evaluate:
+        if not path.exists(pm.seg_images):
+            makedirs(pm.seg_images)
+        eval_result_fp = open(pm.eval_result, 'w')
 
     # snapshot during printing
     while True:
@@ -119,43 +137,36 @@ while True:
             if img is not None:
                 # collect training data
                 cv2.imwrite(path.join(pm.images, filename), img)
-                progress_fp.write('{}, {}, {}\n'.format(timestamp, progress, position))
+                progress_fp.write(f'{timestamp}, {progress}, {position}\n')
 
-                # detect failure every layer
-                queue_hc.append([np.round(position[2], decimals=2), timestamp])
-                if len(queue_hc) > 4:
-                    queue_hc.pop(0)
+                # evaluation
+                if do_evaluate:
+                    # detect failure every layer
+                    queue_hc.append([np.round(position[2], decimals=2), timestamp])
+                    if len(queue_hc) > 4:
+                        queue_hc.pop(0)
 
-                queue_tmp = np.array(queue_hc)
-                if len(queue_tmp) >= 4 and queue_tmp[0, 0] < queue_tmp[1, 0] and (queue_tmp[1, 0] == queue_tmp[2:, 0]).all():
-                    layer_height, timestamp = queue_tmp[1]
+                    queue_tmp = np.array(queue_hc)
+                    if len(queue_tmp) >= 4 and queue_tmp[0, 0] < queue_tmp[1, 0] and (queue_tmp[1, 0] == queue_tmp[2:, 0]).all():
+                        layer_height, timestamp = queue_tmp[1]
 
-                    print('Predict at layer height:', layer_height)
+                        print('Predict at layer height:', layer_height)
 
-                    ''' Failure Detection '''
-                    # check if the input and simulation images exist
-                    input_path = path.join(pm.images, '{}.png'.format(timestamp))
-                    sim_path = path.join(pm.testing, '{}.png'.format(layer_height))
-                    # record testing data
-                    test_list_fp.write('{}, {}\n'.format(layer_height, timestamp))
+                        ''' Failure Detection '''
+                        # check if the input and simulation images exist
+                        input_path = path.join(pm.images, f'{timestamp}.png')
+                        sim_path = path.join(pm.testing, f'{layer_height}.png')
+                        # record testing data
+                        test_list_fp.write(f'{layer_height}, {timestamp}\n')
 
-                    if path.exists(input_path) and path.exists(sim_path):
-                        print('EVALUATE!!')
-                        # TODO: load input image image (for testing)
-                        # input_img = cv2.imread(input_path)
+                        if path.exists(input_path) and path.exists(sim_path):
+                            print('EVALUATE!!')
 
-                        # TODO: load simulated image (for testing)
-                        # simulated_img = cv2.imread(sim_path)
+                            # evaluation
+                            loss, iou = evaluator.evaluate(pm.abs(input_path), pm.abs(sim_path), pm.abs(path.join(pm.seg_images, f'{layer_height}.png')))
 
-                        # TODO: predict
-                        # predict_img = model.predict(input_img)
-
-                        # TODO: evaluate
-                        # score = evaluate(predict_img, simulated_img)
-
-                        # TODO: alert if fall
-                        # if score < threshold:
-                        #     print('[Printing Error] probrary fail')
+                            eval_result_fp.write(f'{layer_height}, {loss}, {iou}\n')
+                            print(f" === Loss: {loss}, IOU: {iou} === ")
             else:
                 print('Invalid input image')
 

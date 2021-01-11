@@ -57,6 +57,8 @@ class PathManager:
             self.images = path.join(self.printjob_folder, 'images')
             # abandon images folder: data/UM?/<printjob>/abandon/
             self.abandon_images = path.join(self.printjob_folder, 'abandon')
+            # segmented image folder: data/UM?/<printjob>/predict/
+            self.seg_images = path.join(self.printjob_folder, 'seg_images')
 
             # simulated images folder: data/UM?/<printjob>/simulation/
             self.simulation = path.join(self.printjob_folder, 'simulation')
@@ -83,6 +85,9 @@ class PathManager:
             # testing data list: data/UM?/<printjob>/test_list.txt
             self.test_list = path.join(self.printjob_folder, 'test_list.txt')
 
+            # evaluation: data/UM?/<printjob>/eval_result.txt
+            self.eval_result = path.join(self.printjob_folder, 'eval_result.txt')
+
         else:
             self.printjob_name = None
             self.printjob_folder = None
@@ -90,6 +95,7 @@ class PathManager:
             self.raw_images = None
             self.images = None
             self.abandon_images = None
+            self.seg_images = None
 
             self.simulation = None
             self.training = None
@@ -105,6 +111,8 @@ class PathManager:
             self.progress = None
 
             self.test_list = None
+
+            self.eval_result = None
 
     def abs(self, rel_path):
         if self.abs_path is None:
