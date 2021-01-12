@@ -163,7 +163,10 @@ while True:
                             print('EVALUATE!!')
 
                             # evaluation
-                            loss, iou = evaluator.evaluate(pm.abs(input_path), pm.abs(sim_path), pm.abs(path.join(pm.seg_images, f'{layer_height}.png')))
+                            seg_path = path.join(pm.seg_images, f'{layer_height}.png')
+                            iou_path = path.join(pm.iou_images, f'{layer_height}.png')
+                            blend_path = path.join(pm.blend_images, f'{layer_height}.png')
+                            loss, iou = evaluator.evaluate(pm.abs(input_path), pm.abs(sim_path), pm.abs(seg_path), pm.abs(iou_path), pm.abs(blend_path))
 
                             eval_result_fp.write(f'{layer_height}, {loss}, {iou}\n')
                             print(f" === Loss: {loss}, IOU: {iou} === ")

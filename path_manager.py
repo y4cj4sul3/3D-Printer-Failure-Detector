@@ -57,8 +57,6 @@ class PathManager:
             self.images = path.join(self.printjob_folder, 'images')
             # abandon images folder: data/UM?/<printjob>/abandon/
             self.abandon_images = path.join(self.printjob_folder, 'abandon')
-            # segmented image folder: data/UM?/<printjob>/predict/
-            self.seg_images = path.join(self.printjob_folder, 'seg_images')
 
             # simulated images folder: data/UM?/<printjob>/simulation/
             self.simulation = path.join(self.printjob_folder, 'simulation')
@@ -66,6 +64,13 @@ class PathManager:
             self.training = path.join(self.simulation, 'training')
             # testing data folder: data/UM?/<printjob>/simulation/testing/
             self.testing = path.join(self.simulation, 'testing')
+            
+            # segmented image folder: data/UM?/<printjob>/predict/
+            self.seg_images = path.join(self.printjob_folder, 'seg_images')
+            # iou image folder: data/UM?/<printjob>/iou/
+            self.iou_images = path.join(self.printjob_folder, 'iou_images')
+            # blend image folder: data/UM?/<printjob>/iou/
+            self.blend_images = path.join(self.printjob_folder, 'blend_images')
 
             # gcode: data/UM?/<printjob>/path.gcode
             self.gcode = path.join(self.printjob_folder, 'path.gcode')
@@ -95,11 +100,14 @@ class PathManager:
             self.raw_images = None
             self.images = None
             self.abandon_images = None
-            self.seg_images = None
 
             self.simulation = None
             self.training = None
             self.testing = None
+            
+            self.seg_images = None
+            self.iou_images = None
+            self.blend_images = None
 
             self.gcode = None
             self.model = None
