@@ -122,14 +122,19 @@ while True:
     test_list_fp = open(pm.test_list, 'w')
 
     # evaluation
-    # layer_height = 0
     # queues for detect height change
     queue_hc = []
+    iou_list = []
     eval_result_fp = None
     if do_evaluate:
         if not path.exists(pm.seg_images):
             makedirs(pm.seg_images)
+        if not path.exists(pm.iou_images):
+            makedirs(pm.iou_images)
+        if not path.exists(pm.blend_images):
+            makedirs(pm.blend_images)
         eval_result_fp = open(pm.eval_result, 'w')
+        iou_list = [1.0 for _ in range(10)]
 
     # snapshot during printing
     while True:
@@ -184,10 +189,14 @@ while True:
                             loss, iou = evaluator.evaluate(pm.abs(input_path), pm.abs(sim_path), pm.abs(seg_path), pm.abs(iou_path), pm.abs(blend_path))
 
                             eval_result_fp.write(f'{layer_height}, {loss}, {iou}\n')
-                            print(f" === Loss: {loss}, IOU: {iou} === ")
+
+                            iou_list.append(iou)
+                            iou_list.pop(0)
+                            smooth_iou = np.mean(iou_list)
+                            print(f" === Loss: {loss}, IOU: {iou}, Smoothed IOU: {smooth_iou} === ")
 
                             if do_visualize:
-                                vc.sendPrinterInfo(input_img_path=input_path, sim_img_path=sim_path)
+                                vc.sendPrinterInfo(input_img_path=input_path, sim_img_path=sim_path, predict_img_path=seg_path, iou_img_path=iou_path, blend_img_path=blend_path, result=f'{loss},{iou},{smooth_iou}')
             else:
                 print('Invalid input image')
 
@@ -206,6 +215,8 @@ while True:
     # progress data & test list file
     progress_fp.close()
     test_list_fp.close()
+    if do_evaluate:
+        eval_result_fp.close()
 
     # print job
     printJob = printer.getPrintJob()
